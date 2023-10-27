@@ -1,0 +1,169 @@
+```{r}
+# Install and load required packages
+library(openai)
+library(data.table)
+
+```
+
+```{r}
+
+# Set sleep time and length per iteration
+sleep_time <- 5
+length_per_iter <- 10
+
+# Include your OpenAI API key
+api_key <- "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"
+
+# Vectors of incomes and prices
+incomes <- c("$50k", "$70k", "$120k")
+prices_int <- c(
+  749, 799, 849, 874, 899, 924, 949, 974, 999,
+  1024, 1049, 1074, 1099, 1124, 1149, 1199, 1249
+)
+
+```
+
+```{r}
+prices_string <- paste0("$", prices_int)
+
+# Function for querying OpenAI API
+query <- function(prompt, n) {
+  rvec <- list()
+  if (n <= 128) {
+    rtemp <- openai::create_completion(
+      engine = "text-davinci-003",
+      prompt = prompt,
+      temperature = 1,
+      max_tokens = 100,
+      top_p = 1.0,
+      n = n,
+      best_of = n,
+      frequency_penalty = 0.0,
+      presence_penalty = 0.0,
+      stop = "\"\"\""
+    )
+    rvec <- list(rtemp)
+  } else {
+    nqueries <- ceiling(n / 128)
+    for (i in 1:nqueries) {
+      if (n > (i - 1) * 128) {
+        cat("Waiting before/between queries....\n")
+        Sys.sleep(sleep_time)
+        n_for_request <- 128
+        if (i == nqueries && n > (i - 1) * 128) {
+          n_for_request <- n - (i - 1) * 128
+        }
+        rtemp <- openai::create_completion(
+          engine = "text-davinci-003",
+          prompt = prompt,
+          temperature = 1,
+          max_tokens = 30,
+          top_p = 1.0,
+          n = n_for_request,
+          best_of = n_for_request,
+          frequency_penalty = 0.0,
+          presence_penalty = 0.0,
+          stop = "\"\"\""
+        )
+        cat(paste("Query", i, "/", nqueries, "Done\n"))
+        rvec <- append(rvec, list(rtemp))
+      }
+    }
+  }
+  return(rvec)
+}
+
+
+# Function for extracting choices from responses
+get_choices <- function(response_vec) {
+  choices <- list()
+  if (inherits(response_vec, "OpenAIResponse")) {
+    nresponses <- length(response_vec[[1]]$choices$text)
+    for (i in 1:nresponses) {
+      choices <- append(choices, response_vec[[1]]$choices$text[[i]])
+    }
+  } else {
+    for (outer_i in 1:length(response_vec)) {
+      nresponses <- length(response_vec[[1]]$choices$text)
+      for (i in 1:nresponses) {
+        choices <- append(choices, response_vec[[1]]$choices$text[[i]])
+      }
+    }
+  }
+  return(choices)
+}
+
+# Function for generating prompts
+make_prompt_surface <- function(income = "$70k", surface_price = "$999") {
+  prompt <- paste0(
+    "A customer is randomly selected while shopping for laptops. Their annual income is ", income, ".",
+    " While shopping, the customer sees a Surface Laptop 3, Price: ", surface_price, ", Processor: Intel Core i5, RAM: 8 GB, Screen Size: 13.5 in, SD: 128 GB",
+    " The customer is asked, after they finish shopping: Did you purchase any laptop? If so, which one?",
+    " Customer:"
+  )
+  return(prompt)
+}
+```
+
+```{r}
+# Main study
+response_vec <- list()
+price_vec <- list()
+choices_vec <- list()
+N <- 100
+
+# Create a list of price and income combinations
+foo <- expand.grid(prices_string, incomes)
+foo <- foo[rep(1:nrow(foo), each = 50 / length_per_iter), ]
+foo <- data.table(foo)
+
+while (nrow(foo) != 0) {
+  surface_prompt <- make_prompt_surface(income = foo$Var2[1], surface_price = foo$Var1[1])
+  responses <- query(surface_prompt, length_per_iter)
+  choices <- get_choices(responses)
+  df <- data.table(
+    income = rep(foo$Var2[1], length(choices)),
+    price = rep(foo$Var1[1], length(choices)),
+    choice = choices
+  )
+  fwrite(df, "study_1a.csv", append = TRUE, col.names = FALSE)
+  cat(paste("price", foo$Var1[1], ", income", foo$Var2[1], "saved. ", nrow(foo), "left.\n"))
+  foo <- foo[-1, ]
+  Sys.sleep(sleep_time)
+}
+
+
+
+```
+
+#Jed's Addition
+```{r}
+#Send the csv to a dataframe
+data <- read.csv(file = "study_1a.csv", header = TRUE, col.names = c("income", "price", "response"))
+
+# Add a new column named 'match_count' initialized with zeros
+data$match_count <- 0
+
+# Search for occurrences of the word "your_word" in the specified column
+matches <- grep("yes", data$response, ignore.case = TRUE)
+
+# Update 'match_count' column to 1 for rows where the word matches
+data$match_count[matches] <- 1
+
+#Change the strings to integers to sort and filter
+data$price <- as.integer(gsub("\\$", "", data$price))
+
+data$income <- as.integer(gsub("\\$|k", "", data$income))
+
+
+#Aggregate to various groups
+group_price_income_50_mean <- aggregate(match_count ~ price, data = data, FUN = mean, subset = income == 50)
+
+group_price_income_50_sum <- aggregate(match_count ~ price, data = data, FUN = sum, subset = income == 50)
+
+group_price_income_sum <- aggregate(match_count ~ price + income, data = data, FUN = sum)
+
+group_price_sum <- aggregate(match_count ~ price, data = data, FUN = sum)
+
+group_income_sum <- aggregate(match_count ~ income, data = data, FUN = sum)
+```
