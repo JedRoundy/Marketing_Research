@@ -1,0 +1,22 @@
+---
+author: Jed Roundy
+
+
+---
+# Install Packages and General Setup
+```{r include = FALSE}
+library(here)
+library(tidyverse)
+library(openai)
+library(readxl)
+
+```
+
+
+# Read in Data
+```{r}
+filepath <-  here('Yogurt_Conjoint', 'Yogurt Design Grid.xlsx')
+
+d <- read_excel(')
+
+```
