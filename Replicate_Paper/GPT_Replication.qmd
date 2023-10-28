@@ -34,7 +34,7 @@ get_response <- function(n = 5, chat = FALSE, prompt, role, keywords){
 
   #Change formatting and model based on chat TRUE/FALSE
   if(chat == TRUE){
-    model <- 'gpt-4'
+    model <- 'gpt-3.5-turbo'
     prompt <- list(list('role' = 'system', 'content' = role), list('role' = 'user', 'content' = prompt))
   }
   

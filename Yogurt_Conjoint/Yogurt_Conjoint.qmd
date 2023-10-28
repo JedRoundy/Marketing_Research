@@ -1,6 +1,6 @@
 ---
 author: Jed Roundy
-
+format: pdf
 
 ---
 # Install Packages and General Setup
@@ -14,9 +14,109 @@ library(readxl)
 
 
 # Read in Data
-```{r}
+```{r include = FALSE}
 filepath <-  here('Yogurt_Conjoint', 'Yogurt Design Grid.xlsx')
 
-d <- read_excel(')
+d <- read_excel(filepath, sheet = 2)
+
+d <- rename(d, c(brand_num = brand...5, type_num = type...6, fat_num = fat...7, package_num = package...8, price_num = price...9, brand_name = brand...10, type_name = type...11, fat_name = fat...12, package_name = package...13, price_name = price...14))
+
+d <- d |> select(-...1)
+```
+
+# Get Responses
+```{r include=FALSE}
+get_response <- function(n = 5, chat = FALSE, prompt, role, keywords){
+
+  #Change formatting and model based on chat TRUE/FALSE
+  if(chat == TRUE){
+    model <- 'gpt-4'
+    prompt <- list(list('role' = 'system', 'content' = role), list('role' = 'user', 'content' = prompt))
+  }
+  
+  if(chat == FALSE){
+    model <- 'text-davinci-003'
+  }
+
+  
+  #identify model and temperature wanted
+  temp <- 1
+  tokens <- 100
+  
+
+  #Use function based on chat argument
+  if(chat == TRUE){
+    response <- create_chat_completion(model = model, n = n, messages = prompt, temperature = temp, max_tokens = tokens, best_of = n)
+  }
+  
+  if(chat == FALSE){
+  response <- create_completion(model = model, n = n, prompt = prompt, temperature = temp, max_tokens = tokens, best_of = n )
+  }
+  
+  #Create choices object  to access the choices directly
+  choices <- response$choices
+  
+  #Create a text vector to store the text in
+  text_v <- c()
+  
+  #Loop through each choice with appropriate access path
+  for (i in 1:n){
+    
+    if(chat == TRUE){
+      text_v <- c(text_v, choices[[4]][[i]])
+    }
+    
+    if(chat == FALSE){
+      text_v <- c(text_v, choices[[1]][[i]])
+    }
+  }
+  
+  #Create vector to store true/false string comparisons
+  answer <- c()
+  
+  
+  #Loop through individual responses
+  for (string in text_v){
+    
+    is_true <- c()
+    
+    #Loop through the keywords
+    for(keyword in keywords){
+      
+      #Append the is_true vector with the result of keyword search
+      is_true <- c(is_true, grepl(keyword, string, ignore.case = TRUE))
+    }
+  
+    #If there is more than 1 keyword found, then return inconclusive. Else, return the keyword that is found. 
+    answer <- c(answer, ifelse(sum(is_true) > 1, 'Inconclusive', keywords[is_true]))
+  }
+  #Makes sure all elements are in a single vector
+  answer <- unlist(answer, FALSE)
+
+return(list(answer = answer, text_v = text_v))
+#return(answer)  
+}
+```
+
+# Conjoint Prompt
+```{r}
+
+conjoint_prompt <- function(brand, type, fat, package, price){
+  
+  role <- 'You are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option number, i.e. 1,2,3. Do NOT include any other information.'
+  
+  prompt <- paste('Option 1: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option 2: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option 3: I would not purchase either of these products.')
+  
+}
+
+
+```
+
+
+# Get the responses
+
+```{r}
+for 
+
 
 ```
