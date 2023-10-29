@@ -101,12 +101,14 @@ return(list(answer = answer, text_v = text_v))
 # Conjoint Prompt
 ```{r}
 
-conjoint_prompt <- function(brand, type, fat, package, price){
+conjoint_prompt <- function(brand_1, type_1, fat_1, package_1, price_1, brand_2, type_2, fat_2, package_2, price_2){
   
   role <- 'You are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option number, i.e. 1,2,3. Do NOT include any other information.'
   
   prompt <- paste('Option 1: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option 2: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option 3: I would not purchase either of these products.')
   
+  
+  return(c(role, prompt))
 }
 
 
@@ -116,7 +118,18 @@ conjoint_prompt <- function(brand, type, fat, package, price){
 # Get the responses
 
 ```{r}
-for 
+
+
+for (i in seq(1, 7, by = 2)) {
+    task <- d[i:(i+1), ]
+    args <- list(d[1,'brand_name'], d[1, 'type_name'], d[1, 'fat_name'], d[1, 'package_name'], d[1, 'price_name'], d[2,'brand_name'], d[2, 'type_name'], d[2, 'fat_name'], d[2, 'package_name'], d[2, 'price_name'])
+    cp <- do.call(conjoint_prompt, args = args)
+    role <- cp[1]
+    prompt <- cp[2]
+    
+    get_response(n = 5, chat = TRUE, prompt = prompt, role = role, keywords = c('1', '2','3','4'))
+    
+}
 
 
 ```
