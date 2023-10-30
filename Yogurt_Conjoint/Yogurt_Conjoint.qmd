@@ -10,6 +10,10 @@ library(tidyverse)
 library(openai)
 library(readxl)
 
+
+Sys.setenv(
+    OPENAI_API_KEY = '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'
+) 
 ```
 
 
@@ -46,7 +50,7 @@ get_response <- function(n = 5, chat = FALSE, prompt, role, keywords){
 
   #Use function based on chat argument
   if(chat == TRUE){
-    response <- create_chat_completion(model = model, n = n, messages = prompt, temperature = temp, max_tokens = tokens, best_of = n)
+    response <- create_chat_completion(model = model, n = n, messages = prompt, temperature = temp, max_tokens = tokens)
   }
   
   if(chat == FALSE){
@@ -101,13 +105,20 @@ return(list(answer = answer, text_v = text_v))
 # Conjoint Prompt
 ```{r}
 
-conjoint_prompt <- function(brand_1, type_1, fat_1, package_1, price_1, brand_2, type_2, fat_2, package_2, price_2){
+conjoint_prompt <- function(prompt_num, brand_1, type_1, fat_1, package_1, price_1, brand_2, type_2, fat_2, package_2, price_2){
   
-  role <- 'You are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option number, i.e. 1,2,3. Do NOT include any other information.'
+  role <- 'You are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option number, i.e. 3,2,1. Do NOT include any other information.'
   
-  prompt <- paste('Option 1: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option 2: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option 3: I would not purchase either of these products.')
+  #Standard Prompt
+  if(prompt_num ==1){
+  prompt_1 <- paste('Option 1: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option 2: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option 3: I would not purchase either of these products.')
+  }
   
   
+  #Reverse the roles to check for 1st choice bias
+  if(prompt_num ==2){
+  prompt_2 <- paste('Option 1: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option 2: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option 3: I would not purchase either of these products.')
+  }
   return(c(role, prompt))
 }
 
@@ -118,18 +129,28 @@ conjoint_prompt <- function(brand_1, type_1, fat_1, package_1, price_1, brand_2,
 # Get the responses
 
 ```{r}
+choice_v <- c()
+text_v <- c()
 
+prompt_num <- 1
 
-for (i in seq(1, 7, by = 2)) {
-    task <- d[i:(i+1), ]
-    args <- list(d[1,'brand_name'], d[1, 'type_name'], d[1, 'fat_name'], d[1, 'package_name'], d[1, 'price_name'], d[2,'brand_name'], d[2, 'type_name'], d[2, 'fat_name'], d[2, 'package_name'], d[2, 'price_name'])
+for (i in seq(1, 50, by = 2)){
+     task <- d[i:(i+1), ]
+    args <- list(prompt_num, d[1,'brand_name'], d[1, 'type_name'], d[1, 'fat_name'], d[1, 'package_name'], d[1, 'price_name'], d[2,'brand_name'], d[2, 'type_name'], d[2, 'fat_name'], d[2, 'package_name'], d[2, 'price_name'])
     cp <- do.call(conjoint_prompt, args = args)
     role <- cp[1]
     prompt <- cp[2]
     
-    get_response(n = 5, chat = TRUE, prompt = prompt, role = role, keywords = c('1', '2','3','4'))
+    response <- get_response(n = 1, chat = TRUE, prompt = prompt, role = role, keywords = c('1', '2','3','4'))
+    
+    choice_v <- c(choice_v, unlist(response[1]))
+    text_v <- c(text_v, unlist(response[2]))
     
 }
 
+choice_v <- rep(choice_v, each = 2)
+text_v <- rep(text_v, each = 2)
+
+assign(paste('d_', prompt_num), rbind(d[1:50,], choice_v, text_v))
 
 ```
