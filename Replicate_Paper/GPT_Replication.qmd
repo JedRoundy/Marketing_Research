@@ -13,9 +13,10 @@ library(openai)
 library(mlogit)
 library(tidyverse)
 
+source('../api_key.R')
 
 Sys.setenv(
-    OPENAI_API_KEY = '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'
+    OPENAI_API_KEY = 'api_key'
 )
 
 

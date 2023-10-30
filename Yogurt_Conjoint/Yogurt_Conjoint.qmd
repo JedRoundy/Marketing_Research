@@ -10,9 +10,10 @@ library(tidyverse)
 library(openai)
 library(readxl)
 
+source('../api_key.R')
 
 Sys.setenv(
-    OPENAI_API_KEY = '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'
+    OPENAI_API_KEY = api_key 
 ) 
 ```
 
