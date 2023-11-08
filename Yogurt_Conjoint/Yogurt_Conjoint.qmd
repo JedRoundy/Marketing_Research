@@ -35,7 +35,7 @@ get_response <- function(n = 5, chat = FALSE, prompt, role, keywords){
 
   #Change formatting and model based on chat TRUE/FALSE
   if(chat == TRUE){
-    model <- 'gpt-4'
+    model <- 'gpt-3.5-turbo'
     prompt <- list(list('role' = 'system', 'content' = role), list('role' = 'user', 'content' = prompt))
   }
   
@@ -45,7 +45,7 @@ get_response <- function(n = 5, chat = FALSE, prompt, role, keywords){
 
   
   #identify model and temperature wanted
-  temp <- 1
+  temp <- 1.5
   tokens <- 100
   
 
@@ -112,13 +112,30 @@ conjoint_prompt <- function(prompt_num, brand_1, type_1, fat_1, package_1, price
   
   #Standard Prompt
   if(prompt_num ==1){
-  prompt_1 <- paste('Option 1: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option 2: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option 3: I would not purchase either of these products.')
+  prompt <- paste('Option 1: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option 2: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option 3: I would not purchase either of these products.')
   }
   
   
-  #Reverse the roles to check for 1st choice bias
+  #Numbers instead of letters
   if(prompt_num ==2){
-  prompt_2 <- paste('Option 1: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option 2: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option 3: I would not purchase either of these products.')
+  prompt <- paste('Option 1: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option 2: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option 3: I would not purchase either of these products.')
+  }
+  
+  #Using letters and numbers
+  if(prompt_num == 3) {
+    
+    role <- 'You are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option letter, i.e. A, B, C. Do NOT include any other information.'
+    
+    prompt <- paste('Option A3: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option B2: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option C1: I would not purchase either of these products.')
+    
+  }
+  
+    if(prompt_num == 4) {
+    
+    role <- 'You are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option letter, i.e. Q, G, P. Do NOT include any other information.'
+    
+    prompt <- paste('Option Q: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option G: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option P: I would not purchase either of these products.')
+    
   }
   return(c(role, prompt))
 }
@@ -133,17 +150,31 @@ conjoint_prompt <- function(prompt_num, brand_1, type_1, fat_1, package_1, price
 choice_v <- c()
 text_v <- c()
 
-prompt_num <- 1
+prompt_num <- 3
 
-for (i in seq(1, 50, by = 2)){
+#Number of distinct tests performed
+k = 1
+
+#Number of responses per test
+
+n = 30
+
+for (i in seq(1, k*2, by = 2)){
+      #For each round, only grab two rows of data at a time 
      task <- d[i:(i+1), ]
+     #create list of args for the prompt
     args <- list(prompt_num, d[1,'brand_name'], d[1, 'type_name'], d[1, 'fat_name'], d[1, 'package_name'], d[1, 'price_name'], d[2,'brand_name'], d[2, 'type_name'], d[2, 'fat_name'], d[2, 'package_name'], d[2, 'price_name'])
+    
+    #Call the prompt with the list of args
     cp <- do.call(conjoint_prompt, args = args)
+    #separate the role from the prompt
     role <- cp[1]
     prompt <- cp[2]
     
-    response <- get_response(n = 1, chat = TRUE, prompt = prompt, role = role, keywords = c('1', '2','3','4'))
+    #use the get_response function to call the openai api and parse out the responses from the api
+    response <- get_response(n = n, chat = TRUE, prompt = prompt, role = role, keywords = c('A3', 'B2','C1'))
     
+    #apply the responses of the choice( via keyword) and text (direct from response) to appropriate vectors
     choice_v <- c(choice_v, unlist(response[1]))
     text_v <- c(text_v, unlist(response[2]))
     
@@ -152,6 +183,49 @@ for (i in seq(1, 50, by = 2)){
 choice_v <- rep(choice_v, each = 2)
 text_v <- rep(text_v, each = 2)
 
-assign(paste('d_', prompt_num), rbind(d[1:50,], choice_v, text_v))
+assign(paste('d_', prompt_num), cbind(d[1:n,], choice_v, text_v))
+
+```
+
+
+Pride Debiasing Algorithm
+```
+Require: Language model, test samples D = {(q_i, x_i)}_8, option number n, estimation budget K
+Ensure: Model predictions y
+
+1. Initialize the model prediction set Y = NULL SET and the prior set P = NULL SET----=> Initialization
+2. Sample the estimation samples D_e under K and the remaining samples D_r = D\D_e
+3. for (x, x) element of D_e do
+4. Debias the model prediction using Eq. 1, add the predicted answer to Y
+5. Estimate the sample-specific prior P_prior(d_i|q) using Eq. 7, add it into P
+6. End for
+7.Estimate the global prior Ptilde_prior(d_i) by averaging P--------------------------=> Prior Estimation
+8: for (x,x) element of D_r do
+9: Debias the model prediction using Eq. 8, add the predicted answer to Y-------------=> Efficient Debiasing
+10: end for
+11: return Y
+
+```
+Implement Pride
+
+```{r}
+
+#1. Initialize the model prediction set Y = NULL SET and the prior set P = NULL SET----=> Initialization
+
+Y <- list()
+P <- list()
+#2. Sample the estimation samples D_e under K and the remaining samples D_r = D\D_e
+
+#3. for (x, x) element of D_e do
+#4. Debias the model prediction using Eq. 1, add the predicted answer to Y
+#5. Estimate the sample-specific prior P_prior(d_i|q) using Eq. 7, add it into P
+#6. End for
+#7.Estimate the global prior Ptilde_prior(d_i) by averaging P--------------------------=> Prior Estimation
+#8: for (x,x) element of D_r do
+#9: Debias the model prediction using Eq. 8, add the predicted answer to Y-------------=> Efficient Debiasing
+#10: end for
+#11: return Y
+
+
 
 ```
