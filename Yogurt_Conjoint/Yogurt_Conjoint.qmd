@@ -31,7 +31,7 @@ d <- d |> select(-...1)
 
 # Get Responses
 ```{r include=FALSE}
-get_response <- function(n = 5, chat = FALSE, prompt, role, keywords){
+get_response <- function(n = 5, chat = FALSE, prompt, role, keywords, temp){
 
   #Change formatting and model based on chat TRUE/FALSE
   if(chat == TRUE){
@@ -45,7 +45,7 @@ get_response <- function(n = 5, chat = FALSE, prompt, role, keywords){
 
   
   #identify model and temperature wanted
-  temp <- 1.5
+  temp <- temp
   tokens <- 100
   
 
@@ -106,9 +106,22 @@ return(list(answer = answer, text_v = text_v))
 # Conjoint Prompt
 ```{r}
 
-conjoint_prompt <- function(prompt_num, brand_1, type_1, fat_1, package_1, price_1, brand_2, type_2, fat_2, package_2, price_2){
+conjoint_prompt <- function(role_num, prompt_num, brand_1, type_1, fat_1, package_1, price_1, brand_2, type_2, fat_2, package_2, price_2){
   
+  
+  #Standard role
+  if(role_num ==1){
   role <- 'You are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option number, i.e. 3,2,1. Do NOT include any other information.'
+  }
+  
+  #Detailed role 1
+  if(role_num ==2){
+  role <- 'Imagine you are a middle aged, white, woman who is grocery shopping. You find the yogurt isle, but they only have two products. You have the choice to either purchase one of the products, or you can leave without purchasing either product. Below are the options available to you. Please respond with ONLY the option label, i.e. 1,2,3 or A,B,C, etc.'
+  }
+  
+  if (role_num ==3){
+    'Imagine you are a young, single, male, college student who is grocery shopping. You find the yogurt isle, but they only have two products. You have the choice to either purchase one of the products, or you can leave without purchasing either product. Below are the options available to you. Please respond with ONLY the option number, i.e. 1, 2, or 3.'
+  }
   
   #Standard Prompt
   if(prompt_num ==1){
@@ -124,15 +137,11 @@ conjoint_prompt <- function(prompt_num, brand_1, type_1, fat_1, package_1, price
   #Using letters and numbers
   if(prompt_num == 3) {
     
-    role <- 'You are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option letter, i.e. A, B, C. Do NOT include any other information.'
-    
     prompt <- paste('Option A3: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option B2: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option C1: I would not purchase either of these products.')
     
   }
   
     if(prompt_num == 4) {
-    
-    role <- 'You are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option letter, i.e. Q, G, P. Do NOT include any other information.'
     
     prompt <- paste('Option Q: Brand:', brand_1, 'Type:', type_1, 'Fat:', fat_1, 'Packaging:', package_1, 'Price:', price_1, '\n', 'Option G: Brand:', brand_2, 'Type:', type_2, 'Fat:', fat_2, 'Packaging:', package_2, 'Price:', price_2, '\n', 'Option P: I would not purchase either of these products.')
     
@@ -150,7 +159,12 @@ conjoint_prompt <- function(prompt_num, brand_1, type_1, fat_1, package_1, price
 choice_v <- c()
 text_v <- c()
 
-prompt_num <- 3
+#variations on role and prompt
+role_num <- 1
+prompt_num <- 1
+
+#temperature setting
+temperature <- 1
 
 #Number of distinct tests performed
 k = 1
@@ -163,7 +177,7 @@ for (i in seq(1, k*2, by = 2)){
       #For each round, only grab two rows of data at a time 
      task <- d[i:(i+1), ]
      #create list of args for the prompt
-    args <- list(prompt_num, d[1,'brand_name'], d[1, 'type_name'], d[1, 'fat_name'], d[1, 'package_name'], d[1, 'price_name'], d[2,'brand_name'], d[2, 'type_name'], d[2, 'fat_name'], d[2, 'package_name'], d[2, 'price_name'])
+    args <- list(prompt_num, task[1,'brand_name'], task[1, 'type_name'], task[1, 'fat_name'], task[1, 'package_name'], task[1, 'price_name'], task[2,'brand_name'], task[2, 'type_name'], task[2, 'fat_name'], task[2, 'package_name'], task[2, 'price_name'])
     
     #Call the prompt with the list of args
     cp <- do.call(conjoint_prompt, args = args)
@@ -172,7 +186,7 @@ for (i in seq(1, k*2, by = 2)){
     prompt <- cp[2]
     
     #use the get_response function to call the openai api and parse out the responses from the api
-    response <- get_response(n = n, chat = TRUE, prompt = prompt, role = role, keywords = c('A3', 'B2','C1'))
+    response <- get_response(n = n, chat = TRUE, prompt = prompt, role = role, keywords = c('A3', 'B2','C1'), temp = temperature)
     
     #apply the responses of the choice( via keyword) and text (direct from response) to appropriate vectors
     choice_v <- c(choice_v, unlist(response[1]))
@@ -183,7 +197,7 @@ for (i in seq(1, k*2, by = 2)){
 choice_v <- rep(choice_v, each = 2)
 text_v <- rep(text_v, each = 2)
 
-assign(paste('d_', prompt_num), cbind(d[1:n,], choice_v, text_v))
+assign(paste('d_','r_', role_num, 'p_', prompt_num, 't_', temperature), cbind(d[1:n,], choice_v, text_v))
 
 ```
 
@@ -229,3 +243,5 @@ P <- list()
 
 
 ```
+
+
