@@ -9,6 +9,8 @@ library(here)
 library(tidyverse)
 library(openai)
 library(readxl)
+library(R.utils)
+
 
 source('../api_key.R')
 
@@ -111,7 +113,7 @@ conjoint_prompt <- function(role_num, brand_1, type_1, fat_1, package_1, price_1
   
   #Numbers
   if(role_num ==1){
-  role <- 'Imagine you are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option number, i.e. 1,2,3. Do NOT include any other information.'
+  role <- 'Imagine you are taking a consumer survey on yogurt. You are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Respond with ONLY the option number, 1,2,3. Do NOT include other information.'
   
   prompt_num <- sample(11:16, 1)
   }
@@ -151,7 +153,7 @@ if(prompt_num == 11){
    
   #Numbers
   if(role_num ==2){
-  role <- 'Imagine you are taking a consumer survey on yogurt, and you are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Please respond with ONLY the option number, i.e. 1,2,3. Do NOT include any other information.'
+  role <- 'Imagine you are taking a consumer survey on yogurt. You are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Respond with ONLY the option letter, A,B,C. Do NOT include any other information.'
   
   prompt_num <- sample(21:26, 1)
   }
@@ -186,6 +188,81 @@ if(prompt_num == 21){
   prompt <- paste0('Option A: I would not purchase either of the products.', '\n','Option B: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2, '\n','Option C: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1)
   }
   return(c(role, prompt, prompt_num))
+  
+  #Numbers
+  if(role_num == 3){
+  role <- 'Imagine you are an individual who is young, white, and liberal, taking a consumer survey on yogurt. You are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Respond with ONLY the option number, 1,2,3. Do NOT include other information.'
+  
+  prompt_num <- sample(31:36, 1)
+  }
+  
+#1-2-3 (OPTION ORDER)
+if(prompt_num == 31){
+  prompt <- paste0('Option 1: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1, '\n','Option 2: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2, '\n', 'Option 3: I would not purchase either of the products.')
+}
+  
+#1-3-2
+  if(prompt_num == 32){
+  prompt <- paste0('Option 1: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1, '\n','Option 2: I would not purchase either of the products.', '\n', 'Option 3: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2)
+  }
+  
+#2-1-3
+  if(prompt_num == 33){
+  prompt <- paste0('Option 1: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2, '\n','Option 2: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1, '\n', 'Option 3: I would not purchase either of the products.')
+}
+
+#2-3-1
+  if(prompt_num == 34){
+  prompt <- paste0('Option 1: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2, '\n','Option 2: I would not purchase either of the products.', '\n', 'Option 3: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1)
+  }
+  
+#3-1-2
+  if(prompt_num == 35){
+  prompt <- paste0('Option 1: I would not purchase either of the products.', '\n','Option 2: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1, '\n', 'Option 3: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2)
+  }
+  
+#3-2-1
+  if(prompt_num == 36){
+  prompt <- paste0('Option 1: I would not purchase either of the products.', '\n','Option 2: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2, '\n','Option 3: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1)
+  }    
+
+  if(role_num == 3){
+  role <- 'Imagine you are an individual who is old, black, and republican, taking a consumer survey on yogurt. You are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Respond with ONLY the option number, 1,2,3. Do NOT include other information.'
+  
+  prompt_num <- sample(41:46, 1)
+  }
+  
+#1-2-3 (OPTION ORDER)
+if(prompt_num == 41){
+  prompt <- paste0('Option 1: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1, '\n','Option 2: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2, '\n', 'Option 3: I would not purchase either of the products.')
+}
+  
+#1-3-2
+  if(prompt_num == 42){
+  prompt <- paste0('Option 1: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1, '\n','Option 2: I would not purchase either of the products.', '\n', 'Option 3: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2)
+  }
+  
+#2-1-3
+  if(prompt_num == 43){
+  prompt <- paste0('Option 1: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2, '\n','Option 2: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1, '\n', 'Option 3: I would not purchase either of the products.')
+}
+
+#2-3-1
+  if(prompt_num == 44){
+  prompt <- paste0('Option 1: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2, '\n','Option 2: I would not purchase either of the products.', '\n', 'Option 3: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1)
+  }
+  
+#3-1-2
+  if(prompt_num == 45){
+  prompt <- paste0('Option 1: I would not purchase either of the products.', '\n','Option 2: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1, '\n', 'Option 3: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2)
+  }
+  
+#3-2-1
+  if(prompt_num == 46){
+  prompt <- paste0('Option 1: I would not purchase either of the products.', '\n','Option 2: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2, '\n','Option 3: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1)
+  }    
+  
+  
 }
 
 
@@ -198,52 +275,89 @@ if(prompt_num == 21){
 choice_v <- c()
 text_v <- c()
 prompt_v <- c()
+task_v <- c()
+concept_v <- c()
+version_v <- c()
 
 #Role 1 - Numbers
 #Role 2 - Letters
 role_num <- 1
-if(role_num == 1){keywords = c('1', '2', '3')}
+if(role_num %in% c(1,3,4)){keywords = c('1', '2', '3')}
 if(role_num == 2){keywords = c('A', 'B', 'C')}
+
 
 
 #temperature setting
 temperature <- 1
 
 #Number of distinct tests performed
-k = 1
+k = 150
 
-#Number of responses per test (make multiple of three for fair randomization)
+#Number of responses per test
 n = 30
 
-for (i in seq(1, k*2, by = 2)){
-      #For each round, only grab two rows of data at a time 
-     task <- d[i:(i+1), ]
-     #create list of args for the prompt
-    args <- list(role_num, task[1,'brand_name'], task[1, 'type_name'], task[1, 'fat_name'], task[1, 'package_name'], task[1, 'price_name'], task[2,'brand_name'], task[2, 'type_name'], task[2, 'fat_name'], task[2, 'package_name'], task[2, 'price_name'])
-    
-    #Call the prompt with the list of args
-    cp <- do.call(conjoint_prompt, args = args)
-    #separate the role from the prompt
-    role <- cp[1]
-    prompt <- cp[2]
-    prompt_num <- cp[3]
-    
-    #use the get_response function to call the openai api and parse out the responses from the api
-    response <- get_response(n = n, chat = TRUE, prompt = prompt, role = role, keywords = keywords, temp = temperature)
-    
-    #apply the responses of the choice( via keyword) and text (direct from response) to appropriate vectors
-    choice_v <- c(choice_v, unlist(response[1]))
-    text_v <- c(text_v, unlist(response[2]))
-    prompt_v <- c(prompt_v, prompt_num)
+for (task in seq(1, k*2, by = 2)){
+    #Print task num
+    print(task)
+    # For each round, only grab two rows of data at a time 
+    task_data <- d[task:(task+1), ]
+
+    for(i in seq(1, n)){
+      
+        # Create list of args for the prompt
+        args <- list(role_num, task_data[1,'brand_name'], task_data[1, 'type_name'], task_data[1, 'fat_name'], task_data[1, 'package_name'], task_data[1, 'price_name'], task_data[2,'brand_name'], task_data[2, 'type_name'], task_data[2, 'fat_name'], task_data[2, 'package_name'], task_data[2, 'price_name'])
+
+        # Call the prompt with the list of args
+        cp <- do.call(conjoint_prompt, args = args)
+        # Separate the role from the prompt
+        role <- cp[1]
+        prompt <- cp[2]
+        prompt_num <- cp[3]
+
+        api_call_successful <- FALSE
+
+        repeat {
+            tryCatch({
+                withTimeout({
+                    # API call
+                    response <- get_response(n = 1, chat = TRUE, prompt = prompt, role = role, keywords = keywords, temp = temperature)
+
+                    # Apply the responses of the choice and text to appropriate vectors
+                    choice_v <- c(choice_v, unlist(response[1]))
+                    text_v <- c(text_v, unlist(response[2]))
+                    prompt_v <- c(prompt_v, prompt_num)
+                    version_v <- c(version_v, task_data[1, 1][[1]])
+                    version_v <- c(version_v, task_data[2, 1][[1]])
+                    task_v <- c(task_v, task_data[1, 2][[1]])
+                    task_v <- c(task_v, task_data[2, 2][[1]])
+                    concept_v <- c(concept_v, task_data[1,3][[1]])
+                    concept_v <- c(concept_v, task_data[2,3][[1]])
+
+                    api_call_successful <- TRUE
+                }, timeout = 5)  # Set timeout to 5 seconds
+            }, error = function(e) {
+                # Handle both timeout and other errors
+                # Optionally log the error or take other actions
+                 print("API call failed or timed out, retrying...")
+            })
+
+            if(api_call_successful) {
+                break
+            }
+        }
+    }
 }
 
-#Ed
+
+
 choice_v <- rep(choice_v, each = 2)
 text_v <- rep(text_v, each = 2)
 prompt_v <- rep(prompt_v, each = 2)
 
-assign(paste0('d_','r_', role_num, 't_', temperature), cbind(d[1:k*2,], choice_v, text_v, prompt_v))
+assign(paste0('data_','r_', role_num), data.frame(choice = choice_v, text = text_v, prompt = prompt_v, task = task_v, concept = concept_v, version = version_v))
 
+data_r_1$prompt <- as.integer(data_r_1$prompt)
+mean(data_r_1$prompt)
 ```
 
 
