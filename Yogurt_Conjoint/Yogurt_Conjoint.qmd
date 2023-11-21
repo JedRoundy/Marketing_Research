@@ -358,6 +358,9 @@ assign(paste0('data_','r_', role_num), data.frame(choice = choice_v, text = text
 
 data_r_1$prompt <- as.integer(data_r_1$prompt)
 mean(data_r_1$prompt)
+
+
+df$choice <- as.factor(df$choice)
 ```
 
 
