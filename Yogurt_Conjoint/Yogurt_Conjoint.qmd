@@ -108,15 +108,13 @@ return(list(answer = answer, text_v = text_v))
 # Conjoint Prompt
 ```{r}
 
-conjoint_prompt <- function(role_num, brand_1, type_1, fat_1, package_1, price_1, brand_2, type_2, fat_2, package_2, price_2){
+conjoint_prompt <- function(role_num, prompt_num, brand_1, type_1, fat_1, package_1, price_1, brand_2, type_2, fat_2, package_2, price_2){
   
   
   #Numbers
   if(role_num ==1){
   role <- 'Imagine you are taking a consumer survey on yogurt. You are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Respond with ONLY the option number, 1,2,3. Do NOT include other information.'
-  
-  prompt_num <- sample(11:16, 1)
-  }
+}
   
 #1-2-3 (OPTION ORDER)
 if(prompt_num == 11){
@@ -226,7 +224,7 @@ if(prompt_num == 31){
   prompt <- paste0('Option 1: I would not purchase either of the products.', '\n','Option 2: Brand:', brand_2, ' Type:', type_2, ' Fat:', fat_2, ' Packaging:', package_2, ' Price:', price_2, '\n','Option 3: Brand:', brand_1, ' Type:', type_1, ' Fat:', fat_1, ' Packaging:', package_1, ' Price:', price_1)
   }    
 
-  if(role_num == 3){
+  if(role_num == 4){
   role <- 'Imagine you are an individual who is old, black, and republican, taking a consumer survey on yogurt. You are presented with three choices. Two choices will be to purchase an item with given attributes, and a third option to not purchase anything. Respond with ONLY the option number, 1,2,3. Do NOT include other information.'
   
   prompt_num <- sample(41:46, 1)
@@ -291,10 +289,8 @@ if(role_num == 2){keywords = c('A', 'B', 'C')}
 temperature <- 1
 
 #Number of distinct tests performed
-k = 150
+k = 10
 
-#Number of responses per test
-n = 30
 
 for (task in seq(1, k*2, by = 2)){
     #Print task num
@@ -302,10 +298,12 @@ for (task in seq(1, k*2, by = 2)){
     # For each round, only grab two rows of data at a time 
     task_data <- d[task:(task+1), ]
 
-    for(i in seq(1, n)){
-      
+    for(i in seq(1, 6)){
+        
+        prompt_num <- as.integer(paste0(role_num, i))
+            
         # Create list of args for the prompt
-        args <- list(role_num, task_data[1,'brand_name'], task_data[1, 'type_name'], task_data[1, 'fat_name'], task_data[1, 'package_name'], task_data[1, 'price_name'], task_data[2,'brand_name'], task_data[2, 'type_name'], task_data[2, 'fat_name'], task_data[2, 'package_name'], task_data[2, 'price_name'])
+        args <- list(role_num,prompt_num, task_data[1,'brand_name'], task_data[1, 'type_name'], task_data[1, 'fat_name'], task_data[1, 'package_name'], task_data[1, 'price_name'], task_data[2,'brand_name'], task_data[2, 'type_name'], task_data[2, 'fat_name'], task_data[2, 'package_name'], task_data[2, 'price_name'])
 
         # Call the prompt with the list of args
         cp <- do.call(conjoint_prompt, args = args)
@@ -356,11 +354,12 @@ prompt_v <- rep(prompt_v, each = 2)
 
 assign(paste0('data_','r_', role_num), data.frame(choice = choice_v, text = text_v, prompt = prompt_v, task = task_v, concept = concept_v, version = version_v))
 
-data_r_1$prompt <- as.integer(data_r_1$prompt)
+columns_to_int <- c("prompt", "task", "concept", 'version')
+data_r_1[columns_to_int] <- lapply(data_r_1[columns_to_int], as.integer)
+
 mean(data_r_1$prompt)
 
 
-df$choice <- as.factor(df$choice)
+data_r_1$choice <- as.factor(data_r_1$choice)
 ```
-
 
